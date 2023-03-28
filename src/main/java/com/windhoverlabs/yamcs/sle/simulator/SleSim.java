@@ -36,12 +36,8 @@ import java.util.logging.Logger;
 	/**
 	 * Echoes back any received data from a client.
 	 */
-	public final class SleSim {
-		
-	    
+	public final class SleSim {   
 	    static AuthLevel authLevel;
-	    
-	    static int slePort;
 	    static SleAttributes sleAttributes;
 	    static Logger logger = Logger.getLogger(SleUdpBridge.class.getName());
 	    static BridgeServiceInitializer srvInitializer;
@@ -80,7 +76,6 @@ import java.util.logging.Logger;
 	        srvInitializer = new BridgeServiceInitializer(props);
 	        authProvider = new SimAuthProvider(props);
 	        
-	        slePort = Integer.valueOf(props.getProperty("sle.port", "25711"));
 	        authLevel = AuthLevel.valueOf(props.getProperty("sle.authLevel", "BIND"));
 	        responderId = props.getProperty("sle.responderId");
 
@@ -100,10 +95,10 @@ import java.util.logging.Logger;
 	                 @Override
 	                 public void initChannel(SocketChannel ch) throws Exception {
 	       	          System.out.println("state2");
+	                    ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(8192, 4, 4));
 	       	          ch.pipeline().addLast(new Isp1Handler(false)); // Isp1Handler - from jsle repo, does the provider authentication 
 //	                  ch.pipeline().addLast(new EchoServerHandler());
 	                  ch.pipeline().addLast(getProvider(ch));
-//	                   ch.pipeline().addLast(); //length of packet the channel can get
 	                   
 
 	                 }
