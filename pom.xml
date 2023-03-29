@@ -15,11 +15,11 @@
       <version>${yamcsVersion}</version>
       <scope>provided</scope>
     </dependency>
-	<dependency>
+<!--	<dependency>
 		<groupId>org.yamcs</groupId>
 		<artifactId>yamcs-sle</artifactId>
 		<version>1.5.0</version>
-	</dependency>
+	</dependency>-->
 	<dependency>
 	<groupId>io.netty</groupId>
     <artifactId>netty-all</artifactId>
@@ -32,14 +32,9 @@
     </dependency>
     <dependency>
     	<groupId>org.yamcs</groupId>
-    	<artifactId>jsle</artifactId>
-    	<version>1.0.0</version>
-    </dependency>
-    <dependency>
-    	<groupId>org.yamcs</groupId>
-		<artifactId>yamcs-sle</artifactId>
-		<version>1.5.0</version>
-    </dependency>
+    	<artifactId>jsle-whl</artifactId>
+    	<version>1.0.1-SNAPSHOT</version>
+    </dependency> 	
 	</dependencies>
     <build>
     <plugins>
