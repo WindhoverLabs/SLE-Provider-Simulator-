@@ -32,9 +32,9 @@
     </dependency>
     <dependency>
     	<groupId>org.yamcs</groupId>
-    	<artifactId>jsle-whl</artifactId>
-    	<version>1.0.1-SNAPSHOT</version>
-    </dependency> 	
+    	<artifactId>jsle</artifactId>
+    	<version>1.0.0</version>
+    </dependency>
 	</dependencies>
     <build>
     <plugins>

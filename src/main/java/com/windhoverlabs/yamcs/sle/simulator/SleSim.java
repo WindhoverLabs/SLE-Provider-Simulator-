@@ -8,7 +8,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.InetSocketAddress;
@@ -19,14 +18,12 @@ import org.yamcs.jsle.Isp1Handler;
 import org.yamcs.jsle.provider.AuthProvider;
 import org.yamcs.jsle.provider.SleAttributes;
 import org.yamcs.jsle.provider.SleProvider;
-import org.yamcs.jsle.udpslebridge.BridgeServiceInitializer;
-import org.yamcs.jsle.udpslebridge.SleUdpBridge;
 
 public final class SleSim {
   static AuthLevel authLevel;
   static SleAttributes sleAttributes;
-  static Logger logger = Logger.getLogger(SleUdpBridge.class.getName());
-  static BridgeServiceInitializer srvInitializer;
+  static Logger logger = Logger.getLogger(SleSim.class.getName());
+  static SimServiceInitializer srvInitializer;
   static AuthProvider authProvider;
   private static String responderId;
 
@@ -44,7 +41,7 @@ public final class SleSim {
     authLevel = AuthLevel.NONE;
     responderId = props.getProperty("sle.responderId");
 
-    srvInitializer = new BridgeServiceInitializer(props);
+    srvInitializer = new SimServiceInitializer(props);
     authProvider = new SimAuthProvider(props);
 
     authLevel = AuthLevel.valueOf(props.getProperty("sle.authLevel", "BIND"));
@@ -60,13 +57,11 @@ public final class SleSim {
           .localAddress(new InetSocketAddress(PORT))
           .childHandler(
               new ChannelInitializer<SocketChannel>() {
-
+                // Server and Client Socket Channel gets created
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
-                  System.out.println("state2");
-                  ch.pipeline()
-                      .addLast(
-                          new LengthFieldBasedFrameDecoder(8192, 4, 4)); // not sure if it needed
+                  // ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(8192, 4, 4)); // not
+                  // sure if it needed
                   ch.pipeline().addLast(new Isp1Handler(false)); // Isp1Handler - from jsle repo
                   ch.pipeline().addLast(getProvider(ch));
                 }
@@ -74,7 +69,6 @@ public final class SleSim {
 
       // Start the server.
       ChannelFuture f = b.bind().sync();
-      System.out.println("state1");
       f.channel().closeFuture().sync();
 
     } finally {
