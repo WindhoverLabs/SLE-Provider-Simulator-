@@ -8,18 +8,21 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import java.io.File;
-import java.io.FileInputStream;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import java.net.InetSocketAddress;
-import java.util.Properties;
 import java.util.logging.Logger;
+import org.yamcs.AbstractYamcsService;
+import org.yamcs.InitException;
+import org.yamcs.YConfiguration;
 import org.yamcs.jsle.AuthLevel;
 import org.yamcs.jsle.Isp1Handler;
 import org.yamcs.jsle.provider.AuthProvider;
 import org.yamcs.jsle.provider.SleAttributes;
 import org.yamcs.jsle.provider.SleProvider;
+import org.yamcs.logging.Log;
 
-public final class SleSim {
+public final class SleSim extends AbstractYamcsService {
   static AuthLevel authLevel;
   static SleAttributes sleAttributes;
   static Logger logger = Logger.getLogger(SleSim.class.getName());
@@ -29,23 +32,32 @@ public final class SleSim {
 
   static final int PORT = Integer.parseInt(System.getProperty("port", "8023"));
 
-  public static void main(String[] args) throws Exception {
-    String cfile = "sim.properties";
-    if (!new File(cfile).exists()) {
-      System.err.println("Config file does not exist: " + cfile);
-    }
+  public void init(String yamcsInstance, String serviceName, YConfiguration config)
+      throws InitException {
+    // System.out.println("*************************************sle_port");
+    System.out.println(config.get("sle_port"));
+    this.yamcsInstance = yamcsInstance;
+    this.serviceName = serviceName;
+    this.config = config;
+    log = new Log(getClass(), yamcsInstance);
+  }
 
-    Properties props = new Properties();
-    props.load(new FileInputStream(cfile));
+  private static ChannelHandler getProvider(SocketChannel ch) {
+    SleProvider csph = new SleProvider(authProvider, responderId, srvInitializer);
+    //  csph.addMonitor(new MyMonitor(csph));
+    csph.setAuthLevel(authLevel);
+    return csph;
+  }
 
+  @Override
+  protected void doStart() {
     authLevel = AuthLevel.NONE;
-    responderId = props.getProperty("sle.responderId");
 
-    srvInitializer = new SimServiceInitializer(props);
-    authProvider = new SimAuthProvider(props);
+    srvInitializer = new SimServiceInitializer(config);
+    authProvider = new SimAuthProvider(config);
 
-    authLevel = AuthLevel.valueOf(props.getProperty("sle.authLevel", "BIND"));
-    responderId = props.getProperty("sle.responderId");
+    authLevel = AuthLevel.valueOf((String) config.get("sle_authLevel"));
+    responderId = (String) config.get("sle_responderId");
 
     // Configure the server.
     EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -60,6 +72,7 @@ public final class SleSim {
                 // Server and Client Socket Channel gets created
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
+                  System.out.println("**********************************755");
                   // ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(8192, 4, 4)); // not
                   // sure if it needed
                   ch.pipeline().addLast(new Isp1Handler(false)); // Isp1Handler - from jsle repo
@@ -68,19 +81,44 @@ public final class SleSim {
               });
 
       // Start the server.
-      ChannelFuture f = b.bind().sync();
-      f.channel().closeFuture().sync();
+      ChannelFuture f = b.bind();
+      f.addListener(
+          new GenericFutureListener() {
+
+            @Override
+            public void operationComplete(Future future) throws Exception {
+              notifyStarted();
+              // TODO Auto-generated method stub
+
+            }
+          });
+      //      f.channel().closeFuture();
+      //      f.addListener(
+      //          new GenericFutureListener() {
+      //
+      //            @Override
+      //            public void operationComplete(Future future) throws Exception {
+      //              System.out.println("**********************************10222222222");
+      //
+      //              // TODO Auto-generated method stub
+      //
+      //            }
+      //          });
+      System.out.println("**********************************8866666");
 
     } finally {
       // Shut down all event loops to terminate all threads.
+      System.out.println("**********************************8444444444444666");
+
       bossGroup.shutdownGracefully();
     }
   }
+  // TODO Auto-generated method stub
 
-  private static ChannelHandler getProvider(SocketChannel ch) {
-    SleProvider csph = new SleProvider(authProvider, responderId, srvInitializer);
-    //  csph.addMonitor(new MyMonitor(csph));
-    csph.setAuthLevel(authLevel);
-    return csph;
+  @Override
+  protected void doStop() {
+    notifyStopped();
+    // TODO Auto-generated method stub
+
   }
 }

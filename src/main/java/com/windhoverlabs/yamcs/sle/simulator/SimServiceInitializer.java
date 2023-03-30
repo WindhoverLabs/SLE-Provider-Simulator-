@@ -1,19 +1,20 @@
 package com.windhoverlabs.yamcs.sle.simulator;
 
+import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.logging.Logger;
+import org.yamcs.YConfiguration;
 import org.yamcs.jsle.Constants.ApplicationIdentifier;
 import org.yamcs.jsle.provider.CltuServiceProvider;
 import org.yamcs.jsle.provider.ServiceInitializer;
 import org.yamcs.jsle.provider.SleService;
 
 public class SimServiceInitializer implements ServiceInitializer {
-  final Properties properties;
+  final YConfiguration config;
   static Logger logger = Logger.getLogger(SimServiceInitializer.class.getName());
 
-  public SimServiceInitializer(Properties properties) {
-    this.properties = properties;
+  public SimServiceInitializer(YConfiguration config) {
+    this.config = config;
   }
 
   @Override
@@ -21,18 +22,19 @@ public class SimServiceInitializer implements ServiceInitializer {
       String initiatorId, String responderPortId, ApplicationIdentifier appId, String sii) {
     // look for an entry where auth.x.initiatorId = initiatorId and return x
     Optional<String> x =
-        properties.entrySet().stream()
-            .filter(
-                e ->
-                    sii.equals(e.getValue())
-                        && ((String) e.getKey()).startsWith("service.")
-                        && ((String) e.getKey()).endsWith(".sii"))
-            .map(
-                e -> {
-                  String k = (String) e.getKey();
-                  return k.substring(8, k.length() - 4);
-                })
-            .findFirst();
+        ((Map<Object, Object>) config)
+            .entrySet().stream()
+                .filter(
+                    e ->
+                        sii.equals(e.getValue())
+                            && ((String) e.getKey()).startsWith("service_")
+                            && ((String) e.getKey()).endsWith("_sii"))
+                .map(
+                    e -> {
+                      String k = (String) e.getKey();
+                      return k.substring(8, k.length() - 4);
+                    })
+                .findFirst();
 
     if (!x.isPresent()) {
       logger.info("Cannot find a service entry for sii='" + sii + "'");
@@ -40,7 +42,7 @@ public class SimServiceInitializer implements ServiceInitializer {
     }
 
     String id = x.get();
-    String servType = properties.getProperty("service." + id + ".type");
+    String servType = (String) config.get(("service_" + id + "_type"));
 
     if ("raf".equals(servType)) {
       if (appId != ApplicationIdentifier.rtnAllFrames) {

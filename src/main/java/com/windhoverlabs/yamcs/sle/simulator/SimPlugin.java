@@ -1,3 +1,10 @@
 package com.windhoverlabs.yamcs.sle.simulator;
 
-public class SimPlugin {}
+import org.yamcs.Plugin;
+import org.yamcs.YConfiguration;
+
+public class SimPlugin implements Plugin {
+  public void onLoad(YConfiguration config) {
+    // System.out.println("********************************");
+  }
+}

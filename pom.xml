@@ -38,10 +38,10 @@
 	</dependencies>
     <build>
     <plugins>
-    <plugin>
+   <plugin>
   <groupId>org.yamcs</groupId>
   <artifactId>yamcs-maven-plugin</artifactId>
-  <!--version>...</version-->
+ <!-- <version>...</version> -->
   <executions>
     <execution>
       <goals>

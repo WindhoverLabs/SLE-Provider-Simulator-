@@ -1,12 +1,12 @@
 package com.windhoverlabs.yamcs.sle.simulator;
 
-import java.util.Properties;
+import org.yamcs.YConfiguration;
 
 public class SimUtil {
-  public static String getProperty(Properties props, String key) {
-    if (!props.containsKey(key)) {
+  public static String getProperty(YConfiguration config, String key) {
+    if (!config.containsKey(key)) {
       throw new SimConfigurationException("Cannot find property '" + key + "'");
     }
-    return props.getProperty(key);
+    return (String) config.get(key);
   }
 }
