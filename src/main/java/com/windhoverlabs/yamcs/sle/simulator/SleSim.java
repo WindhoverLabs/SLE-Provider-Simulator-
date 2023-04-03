@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import org.yamcs.AbstractYamcsService;
 import org.yamcs.InitException;
 import org.yamcs.YConfiguration;
+import org.yamcs.jsle.AuthLevel;
 import org.yamcs.jsle.Isp1Handler;
 import org.yamcs.jsle.provider.AuthProvider;
 import org.yamcs.jsle.provider.SleAttributes;
@@ -20,7 +21,7 @@ import org.yamcs.jsle.provider.SleProvider;
 import org.yamcs.logging.Log;
 
 public final class SleSim extends AbstractYamcsService implements Runnable {
-  // static AuthLevel authLevel;
+  static AuthLevel authLevel;
   static SleAttributes sleAttributes;
   static Logger logger = Logger.getLogger(SleSim.class.getName());
   static SimServiceInitializer srvInitializer;
@@ -32,7 +33,7 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
 
   public void init(String yamcsInstance, String serviceName, YConfiguration config)
       throws InitException {
-    System.out.println(config.get("sle_port"));
+    System.out.println(config.get("sle.port"));
     this.yamcsInstance = yamcsInstance;
     this.serviceName = serviceName;
     this.config = config;
@@ -43,7 +44,7 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
 
     SleProvider csph = new SleProvider(authProvider, responderId, srvInitializer);
     //  csph.addMonitor(new MyMonitor(csph));
-    // csph.setAuthLevel(authLevel);
+    csph.setAuthLevel(authLevel);
     return csph;
   }
 
@@ -57,13 +58,13 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
 
   @Override
   public void run() {
-    // authLevel = AuthLevel.NONE;
+    authLevel = AuthLevel.NONE;
 
     srvInitializer = new SimServiceInitializer(config);
     authProvider = new SimAuthProvider(config);
 
-    //  authLevel = AuthLevel.valueOf((String) config.get("sle_authLevel"));
-    responderId = (String) config.get("sle_responderId");
+    authLevel = AuthLevel.valueOf((String) config.get("sle.authLevel"));
+    responderId = (String) config.get("sle.responderId");
 
     // Configure the server.
     EventLoopGroup bossGroup = new NioEventLoopGroup(1);

@@ -1,7 +1,5 @@
 package com.windhoverlabs.yamcs.sle.simulator;
 
-import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Logger;
 import org.yamcs.YConfiguration;
 import org.yamcs.jsle.Constants.ApplicationIdentifier;
@@ -19,30 +17,24 @@ public class SimServiceInitializer implements ServiceInitializer {
 
   @Override
   public ServiceInitResult getServiceInstance(
-      String initiatorId, String responderPortId, ApplicationIdentifier appId, String sii) {
-    // look for an entry where auth.x.initiatorId = initiatorId and return x
-    Optional<String> x =
-        ((Map<Object, Object>) config)
-            .entrySet().stream()
-                .filter(
-                    e ->
-                        sii.equals(e.getValue())
-                            && ((String) e.getKey()).startsWith("service_")
-                            && ((String) e.getKey()).endsWith("_sii"))
-                .map(
-                    e -> {
-                      String k = (String) e.getKey();
-                      return k.substring(8, k.length() - 4);
-                    })
-                .findFirst();
+    String initiatorId, String responderPortId, ApplicationIdentifier appId, String sii) {
+    config.getKeys().toArray();
+    Object[] num = config.getKeys().toArray();
+    String id = "";
+    for (int i = 0; i < num.length; i++) {
 
-    if (!x.isPresent()) {
-      logger.info("Cannot find a service entry for sii='" + sii + "'");
-      return negativeResponse(3); // no such service instance
+      if (((String) num[i]).startsWith("service.") && ((String) num[i]).endsWith(".sii")) {
+        System.out.println(num[i] + "*");
+        id = ((String) num[i]).substring(8, ((String) num[i]).length() - 4);
+        System.out.println("This is the ID");
+        System.out.println(id);
+        System.out.println("This is the number");
+        System.out.println(
+            ((String) num[i]).substring(8, ((String) num[i]).length() - 4) + "           **");
+      }
     }
 
-    String id = x.get();
-    String servType = (String) config.get(("service_" + id + "_type"));
+    String servType = (String) config.get(("service." + id + ".type"));
 
     if ("raf".equals(servType)) {
       if (appId != ApplicationIdentifier.rtnAllFrames) {
