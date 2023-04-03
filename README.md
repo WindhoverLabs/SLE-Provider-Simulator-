@@ -2,15 +2,16 @@
 
 Open a shell for the Provider Simulator and another shell for the YAMCS-SLE client. Launch the Proider Simulator first and then the YAMCS-SLE client. 
 
-1. mvn exec:java
+To launch YAMCS using sitl_commander_workspace, you must first make the workspace following the instructions from airliner/README.md
 
-This should launch the provider simulation from the Provider Simulator directory . Working on making the Povider Simulator a YAMCS plugin.
+1. Provider simulator shell
 
-2. To launch YAMCS using sitl_commander_workspace, you must first make the workspace following the instructions from airliner/README.md
-
-3. ./bin/yamcs-start /opt/yamcs .
+ ./bin/yamcs-start /opt/yamcs .
+ 
+ 2. YAMCS-SLE client
+ ./bin/yamcs-start /opt/yamcs .
 
 This should launch YAMCS from the sitl_commander_workspace directory. 
 
-4. When YAMCS is lauched, sle-client will be in READY state. To go to ACTIVE state navigate to "more actions" and select Start SLE. 
+When YAMCS is lauched, sle-client will be in READY state. To go to ACTIVE state navigate to "more actions" and select Start SLE. 
 

@@ -19,31 +19,19 @@ public class SimAuthProvider implements AuthProvider {
   @Override
   public Isp1Authentication getAuth(String initiatorId) {
 
+    // gets the value of id from the yamcs.fsw.yaml file
     config.getKeys().toArray();
     Object[] num = config.getKeys().toArray();
     String id = "";
     for (int i = 0; i < num.length; i++) {
 
       if (((String) num[i]).startsWith("auth.") && ((String) num[i]).endsWith(".initiatorId")) {
-        System.out.println(num[i] + "*");
         id = ((String) num[i]).substring(5, ((String) num[i]).length() - 12);
-        System.out.println("This is the ID");
-        System.out.println(id);
-        System.out.println("This is the number");
-        System.out.println(
-            ((String) num[i]).substring(5, ((String) num[i]).length() - 12) + "           **");
       }
     }
-
-    System.out.println(id + "   ***");
-
     String peerUsername = (String) config.get(("auth." + id + ".peerUsername"));
-    System.out.println(id + "             ****");
-    System.out.println(peerUsername + "*****");
     String hashAlgorithm = config.getString("auth." + id + ".hashAlgorithm", "SHA-1");
-    System.out.println(hashAlgorithm);
     byte[] peerPass = ByteBufUtil.decodeHexDump(config.getString("auth." + id + ".peerPassword"));
-    System.out.println(peerPass + "4444455555544441111111111");
     return new Isp1Authentication(myUsername, myPass, peerUsername, peerPass, hashAlgorithm);
   }
 }

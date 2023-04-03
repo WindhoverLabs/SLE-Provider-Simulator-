@@ -17,20 +17,14 @@ public class SimServiceInitializer implements ServiceInitializer {
 
   @Override
   public ServiceInitResult getServiceInstance(
-    String initiatorId, String responderPortId, ApplicationIdentifier appId, String sii) {
+      String initiatorId, String responderPortId, ApplicationIdentifier appId, String sii) {
     config.getKeys().toArray();
-    Object[] num = config.getKeys().toArray();
+    Object[] args = config.getKeys().toArray();
     String id = "";
-    for (int i = 0; i < num.length; i++) {
+    for (int i = 0; i < args.length; i++) {
 
-      if (((String) num[i]).startsWith("service.") && ((String) num[i]).endsWith(".sii")) {
-        System.out.println(num[i] + "*");
-        id = ((String) num[i]).substring(8, ((String) num[i]).length() - 4);
-        System.out.println("This is the ID");
-        System.out.println(id);
-        System.out.println("This is the number");
-        System.out.println(
-            ((String) num[i]).substring(8, ((String) num[i]).length() - 4) + "           **");
+      if (((String) args[i]).startsWith("service.") && ((String) args[i]).endsWith(".sii")) {
+        id = ((String) args[i]).substring(8, ((String) args[i]).length() - 4);
       }
     }
 
@@ -61,22 +55,23 @@ public class SimServiceInitializer implements ServiceInitializer {
       return negativeResponse(1); // service type not supported
     }
   }
-
+  ///////////////////////// this will be revisited later//////////////
   //    private ServiceInitResult createRafProvider(String id) {
   //        RafServiceProvider rsp = new RafServiceProvider(getFrameSource(id));
-  //        return positiveResponse(id, rsp); // this will be revisited later
+  //        return positiveResponse(id, rsp);
   //    }
   //
   //    private ServiceInitResult createRcfProvider(String id) {
   //        RcfServiceProvider rsp = new RcfServiceProvider(getFrameSource(id));
-  //        return positiveResponse(id, rsp); // this will be revisited later
+  //        return positiveResponse(id, rsp); x
   //    }
+  ////////////////////////////////////////////////////////////////////////////
 
   private ServiceInitResult createCltuProvider(String id) {
     CltuServiceProvider csp = new CltuServiceProvider(new SimFrameSink(1000));
     return positiveResponse(id, csp);
   }
-
+  ////////////////////// this will be revisited later///////////////////////////
   //    private FrameSource getFrameSource(String id) {
   //        String sid = SimUtil.getProperty(properties, "service." + id + ".fsource");
   //        FrameSource frameSource = FrameSources.getSource(sid);
@@ -84,7 +79,8 @@ public class SimServiceInitializer implements ServiceInitializer {
   //            throw new SimConfigurationException("Unknown frame source '" + sid + "'");
   //        }
   //        return frameSource;
-  //    } // this will be revisited later
+  //    }
+  //////////////////////////////////////////////////////////////////////////////
 
   private ServiceInitResult positiveResponse(String id, SleService service) {
     ServiceInitResult r = new ServiceInitResult();

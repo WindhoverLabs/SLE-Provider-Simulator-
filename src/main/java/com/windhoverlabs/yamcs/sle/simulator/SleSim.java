@@ -33,7 +33,6 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
 
   public void init(String yamcsInstance, String serviceName, YConfiguration config)
       throws InitException {
-    System.out.println(config.get("sle.port"));
     this.yamcsInstance = yamcsInstance;
     this.serviceName = serviceName;
     this.config = config;
@@ -79,17 +78,16 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
                 // Server and Client Socket Channel gets created
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
-
-                  System.out.println("**********************************755");
-                  ch.pipeline().addLast(new Isp1Handler(false)); // Isp1Handler - from jsle repo
+                  notifyStarted(); // from YAMCS state
+                  System.out.println("state1");
+                  System.out.println("client server connected");
+                  ch.pipeline().addLast(new Isp1Handler(false));
                   ch.pipeline().addLast(getProvider(ch));
                 }
               });
 
       // Start the server.
       ChannelFuture f = b.bind().sync();
-      notifyStarted();
-      System.out.println("state1");
       f.channel().closeFuture().sync();
 
     } catch (InterruptedException e) {
@@ -97,14 +95,12 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
       e.printStackTrace();
     } finally {
       // Shut down all event loops to terminate all threads.
-      System.out.println("**********************************8444444444444666");
-
       bossGroup.shutdownGracefully();
     }
   }
 
   protected void doStop() {
-    notifyStopped();
+    notifyStopped(); // from YAMCS state
     // TODO Auto-generated method stub
 
   }
