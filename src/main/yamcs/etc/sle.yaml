@@ -1,0 +1,45 @@
+################provider configuration file##############################
+############### general properties ######################################
+#general properties used for SLE connection and authentication
+#they have to be passed to the SLE users to be able to connect and verify the data we send
+#the password is in hexadecimal
+#authLevel can be ALL, BIND or NONE
+sle_port: 8023
+sle_myUsername: jsle-bridge
+sle_myPassword: AB0102030405060708090a0b0c0d0e0f
+sle_authLevel: NONE
+sle_responderId: jsle-bridge
+
+################ authentication information #############################
+# The initiator-identifier received in the BIND call is matched against the initiatorId
+# If an entry is found, the corresponding peerUsername/peerPassword are then used to verify the credentials (if the authLevel is ALL or BIND)
+# If no entry is found the bind is denied even if the authLevel is NONE
+#
+auth_1_initiatorId: mertens
+auth_1_peerUsername: mertens
+auth_1_peerPassword: 000102030405060708090a0b0c0d0e0f
+auth_1_hashAlgorithm: SHA-1
+
+
+################ service definition ############################
+# The service-instance-identifier in the BIND call is matched against the sii (otherwise the sii is not used)
+# If an entry is found, the application type is matched against the type
+# The type has to be either  raf, rcf or cltu 
+# For raf the udpPort is the local post where we listen for frames
+# For cltu the udpHost/udpPort is the host and port where we send the received CLTUs
+# Cltu also supports the bitrate (bits/seconds) used to compute the duration to send one CLTU
+#
+service_raf-ontl1_sii: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.raf=onlt1"
+service_raf-ontl1.type: raf
+
+
+service_rcf-ontl1_sii: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.rcf=onlt1"
+service_rcf-ontl1_type: rcf
+
+
+service_offl1_sii: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.raf=offl1"
+service_offl1_type: raf
+
+service_cltu1_sii: "sagr=SAGR.spack=SPACK.fsl-fg=FSL-FG.cltu=cltu1"
+service_cltu1_type: cltu
+
