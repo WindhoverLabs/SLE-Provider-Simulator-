@@ -46,7 +46,6 @@ import org.yamcs.AbstractYamcsService;
 import org.yamcs.InitException;
 import org.yamcs.YConfiguration;
 import org.yamcs.jsle.AuthLevel;
-import org.yamcs.jsle.Isp1Handler;
 import org.yamcs.jsle.provider.AuthProvider;
 import org.yamcs.jsle.provider.SleAttributes;
 import org.yamcs.jsle.provider.SleProvider;
@@ -118,8 +117,10 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
               });
 
       // Start the server.
+      System.out.println("state3");
       ChannelFuture f = b.bind().sync();
       notifyStarted(); // from YAMCS state
+      System.out.println("state2");
       f.channel().closeFuture().sync();
 
     } catch (InterruptedException e) {
@@ -137,3 +138,4 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
 
   }
 }
+
