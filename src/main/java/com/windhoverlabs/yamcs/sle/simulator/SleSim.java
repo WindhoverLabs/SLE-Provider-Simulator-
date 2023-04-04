@@ -40,19 +40,21 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 import org.yamcs.AbstractYamcsService;
 import org.yamcs.InitException;
 import org.yamcs.YConfiguration;
 import org.yamcs.jsle.AuthLevel;
+import org.yamcs.jsle.Isp1Handler;
 import org.yamcs.jsle.provider.AuthProvider;
 import org.yamcs.jsle.provider.SleAttributes;
 import org.yamcs.jsle.provider.SleProvider;
 import org.yamcs.logging.Log;
 
 public final class SleSim extends AbstractYamcsService implements Runnable {
-  static AuthLevel authLevel;
+  static AuthLevel authLevel = AuthLevel.NONE;
   static SleAttributes sleAttributes;
   static Logger logger = Logger.getLogger(SleSim.class.getName());
   static SimServiceInitializer srvInitializer;
@@ -63,7 +65,7 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
   static final int PORT = Integer.parseInt(System.getProperty("port", "8023"));
 
   public void init(String yamcsInstance, String serviceName, YConfiguration config)
-      throws InitException {
+    throws InitException {
     this.yamcsInstance = yamcsInstance;
     this.serviceName = serviceName;
     this.config = config;
@@ -88,7 +90,8 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
 
   @Override
   public void run() {
-    authLevel = AuthLevel.NONE;
+	  int maxFramLength = 300 * 1024;
+    
 
     srvInitializer = new SimServiceInitializer(config);
     authProvider = new SimAuthProvider(config);
@@ -106,21 +109,18 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
           .localAddress(new InetSocketAddress(PORT))
           .childHandler(
               new ChannelInitializer<SocketChannel>() {
-                // Server and Client Socket Channel gets created
+                //  Channel gets created
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
-                  System.out.println("state1");
-                  System.out.println("client server connected");
+                  ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(maxFramLength , 4, 4));
                   ch.pipeline().addLast(new Isp1Handler(false));
                   ch.pipeline().addLast(getProvider(ch));
                 }
               });
 
       // Start the server.
-      System.out.println("state3");
       ChannelFuture f = b.bind().sync();
       notifyStarted(); // from YAMCS state
-      System.out.println("state2");
       f.channel().closeFuture().sync();
 
     } catch (InterruptedException e) {
