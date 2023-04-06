@@ -65,7 +65,7 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
   static final int PORT = Integer.parseInt(System.getProperty("port", "8023"));
 
   public void init(String yamcsInstance, String serviceName, YConfiguration config)
-    throws InitException {
+      throws InitException {
     this.yamcsInstance = yamcsInstance;
     this.serviceName = serviceName;
     this.config = config;
@@ -90,8 +90,7 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
 
   @Override
   public void run() {
-	  int maxFramLength = 300 * 1024;
-    
+    int maxFramLength = 300 * 1024;
 
     srvInitializer = new SimServiceInitializer(config);
     authProvider = new SimAuthProvider(config);
@@ -112,7 +111,7 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
                 //  Channel gets created
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
-                  ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(maxFramLength , 4, 4));
+                  ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(maxFramLength, 4, 4));
                   ch.pipeline().addLast(new Isp1Handler(false));
                   ch.pipeline().addLast(getProvider(ch));
                 }
@@ -138,4 +137,3 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
 
   }
 }
-

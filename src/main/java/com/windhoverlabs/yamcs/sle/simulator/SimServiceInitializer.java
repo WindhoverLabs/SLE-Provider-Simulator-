@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 import org.yamcs.YConfiguration;
 import org.yamcs.jsle.Constants.ApplicationIdentifier;
 import org.yamcs.jsle.provider.CltuServiceProvider;
+import org.yamcs.jsle.provider.RafServiceProvider;
 import org.yamcs.jsle.provider.ServiceInitializer;
 import org.yamcs.jsle.provider.SleService;
 
@@ -67,7 +68,7 @@ public class SimServiceInitializer implements ServiceInitializer {
         logger.info("Requested application " + appId + " does not match defined service type raf");
         return negativeResponse(6); // inconsistent service type
       }
-      return null; // will be implemented properly later
+      return createRafProvider(id); // will be implemented properly later
 
     } else if ("rcf".equals(servType)) {
       if (appId != ApplicationIdentifier.rtnChFrames) {
@@ -87,32 +88,37 @@ public class SimServiceInitializer implements ServiceInitializer {
       return negativeResponse(1); // service type not supported
     }
   }
-  ///////////////////////// this will be revisited later//////////////
-  //    private ServiceInitResult createRafProvider(String id) {
-  //        RafServiceProvider rsp = new RafServiceProvider(getFrameSource(id));
-  //        return positiveResponse(id, rsp);
-  //    }
-  //
-  //    private ServiceInitResult createRcfProvider(String id) {
-  //        RcfServiceProvider rsp = new RcfServiceProvider(getFrameSource(id));
-  //        return positiveResponse(id, rsp); x
-  //    }
-  ////////////////////////////////////////////////////////////////////////////
+  /////////////////////// this will be revisited later//////////////
+//  private ServiceInitResult createRafProvider(String id) {
+//    RafServiceProvider rsp = new RafServiceProvider(new rafFrameSource(config));
+//    System.out.println(rsp);
+//    return positiveResponse(id, rsp);
+//  }
+  //  private ServiceInitResult createRafProvider(String id) {
+  //	         RafServiceProvider rsp = new RafServiceProvider(getFrameSource(id));
+  //	         return positiveResponse(id, rsp);
+  //	     }
+
+  //      private ServiceInitResult createRcfProvider(String id) {
+  //          RcfServiceProvider rsp = new RcfServiceProvider(getFrameSource(id));
+  //          return positiveResponse(id, rsp); x
+  //      }
+  //////////////////////////////////////////////////////////////////////////
 
   private ServiceInitResult createCltuProvider(String id) {
     CltuServiceProvider csp = new CltuServiceProvider(new SimFrameSink(1000));
     return positiveResponse(id, csp);
   }
-  ////////////////////// this will be revisited later///////////////////////////
-  //    private FrameSource getFrameSource(String id) {
-  //        String sid = SimUtil.getProperty(properties, "service." + id + ".fsource");
-  //        FrameSource frameSource = FrameSources.getSource(sid);
-  //        if (frameSource == null) {
-  //            throw new SimConfigurationException("Unknown frame source '" + sid + "'");
-  //        }
-  //        return frameSource;
-  //    }
-  //////////////////////////////////////////////////////////////////////////////
+  //////////////////// this will be revisited later///////////////////////////
+  //      private FrameSource getFrameSource(String id) {
+  //          String sid = SimUtil.getProperty(properties, "service." + id + ".fsource");
+  //          FrameSource frameSource = FrameSources.getSource(sid);
+  //          if (frameSource == null) {
+  //              throw new SimConfigurationException("Unknown frame source '" + sid + "'");
+  //          }
+  //          return frameSource;
+  //      }
+  ////////////////////////////////////////////////////////////////////////////
 
   private ServiceInitResult positiveResponse(String id, SleService service) {
     ServiceInitResult r = new ServiceInitResult();
