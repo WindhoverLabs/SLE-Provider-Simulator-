@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 import org.yamcs.YConfiguration;
 import org.yamcs.jsle.Constants.ApplicationIdentifier;
 import org.yamcs.jsle.provider.CltuServiceProvider;
+import org.yamcs.jsle.provider.FrameSource;
 import org.yamcs.jsle.provider.RafServiceProvider;
 import org.yamcs.jsle.provider.ServiceInitializer;
 import org.yamcs.jsle.provider.SleService;
@@ -51,13 +52,15 @@ public class SimServiceInitializer implements ServiceInitializer {
   @Override
   public ServiceInitResult getServiceInstance(
       String initiatorId, String responderPortId, ApplicationIdentifier appId, String sii) {
-    config.getKeys().toArray();
-    Object[] args = config.getKeys().toArray();
+    Object[] keys = config.getKeys().toArray();
     String id = "";
-    for (int i = 0; i < args.length; i++) {
+    System.out.println("SII-->" + sii);
 
-      if (((String) args[i]).startsWith("service.") && ((String) args[i]).endsWith(".sii")) {
-        id = ((String) args[i]).substring(8, ((String) args[i]).length() - 4);
+    for (int i = 0; i < keys.length; i++) {
+      if (sii.equals(config.get((String) keys[i]))
+          && ((String) keys[i]).startsWith("service.")
+          && ((String) keys[i]).endsWith(".sii")) {
+        id = ((String) keys[i]).substring(8, ((String) keys[i]).length() - 4);
       }
     }
 
@@ -89,11 +92,13 @@ public class SimServiceInitializer implements ServiceInitializer {
     }
   }
   /////////////////////// this will be revisited later//////////////
-//  private ServiceInitResult createRafProvider(String id) {
-//    RafServiceProvider rsp = new RafServiceProvider(new rafFrameSource(config));
-//    System.out.println(rsp);
-//    return positiveResponse(id, rsp);
-//  }
+  private ServiceInitResult createRafProvider(String id) {
+    FrameSource f = new rafFrameSource(config);
+    f.startup();
+    RafServiceProvider rsp = new RafServiceProvider(f);
+    System.out.println(rsp);
+    return positiveResponse(id, rsp);
+  }
   //  private ServiceInitResult createRafProvider(String id) {
   //	         RafServiceProvider rsp = new RafServiceProvider(getFrameSource(id));
   //	         return positiveResponse(id, rsp);

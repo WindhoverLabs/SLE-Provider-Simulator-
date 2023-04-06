@@ -34,9 +34,9 @@ public class rafFrameSource implements FrameSource, Runnable {
   public rafFrameSource(YConfiguration config) {
     this.config = config;
     // this.id = id;
-    this.port = Integer.parseInt(config.getString("fsource.udp.port"));
+    this.port = config.getInt("fsource.udp.port");
     // this.port = Integer.valueOf(Util.getProperty(properties, "fsource." + id + ".port"));
-    this.maxFrameLength = Integer.parseInt(config.getString("fsource.udp.maxFameLengh"));
+    this.maxFrameLength = config.getInt("fsource.udp.maxFrameLength");
     //        String dataDir = config.getString("fsource.udp.record");
     //        if (dataDir != null) {
     //            recorder = new FrameRecorder(dataDir);
@@ -66,13 +66,17 @@ public class rafFrameSource implements FrameSource, Runnable {
   @Override
   public void run() {
     logger.info(": listening for UDP frames at port " + port);
+
+    System.out.println("udp run1------------");
     //        if (recorder != null) {
     //            logger.info(": recording frames in " + recorder.rootDir);
     //        }
     while (!stopping) {
       DatagramPacket datagram = new DatagramPacket(new byte[maxFrameLength], maxFrameLength);
       try {
+        System.out.println("udp run2------------");
         socket.receive(datagram);
+        System.out.println("udp run3------------");
       } catch (IOException e) {
         if (stopping) {
           return;
