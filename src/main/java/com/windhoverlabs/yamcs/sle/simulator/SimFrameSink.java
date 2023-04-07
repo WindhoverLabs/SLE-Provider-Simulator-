@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2017 Windhover Labs, L.L.C. All rights reserved.
+ *   Copyright (c) 2023 Windhover Labs, L.L.C. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,10 +52,6 @@ public class SimFrameSink implements FrameSink {
     this.bitrate = bitrate;
   }
 
-  public SimFrameSink(Properties properties, String id) {
-    this.bitrate = Integer.valueOf(properties.getProperty(".bitrate", "10000"));
-  }
-
   @Override
   public void startup() {}
 
@@ -86,14 +82,12 @@ public class SimFrameSink implements FrameSink {
     if (evId > 4) {
       return CltuThrowEventDiagnostics.noSuchEvent;
     }
-    // TODO change bitrate?
     return null; // ok
   }
 
   @Override
   public int start(CltuServiceProvider csp) {
     this.cltuParameters = csp.getParameters();
-    // TODO set the bitrate in the cltuParameters or the other way around?
     return -1; // ok
   }
 

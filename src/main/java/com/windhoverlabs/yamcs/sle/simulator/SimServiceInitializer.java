@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2017 Windhover Labs, L.L.C. All rights reserved.
+ *   Copyright (c) 2023 Windhover Labs, L.L.C. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,8 +42,11 @@ import org.yamcs.jsle.provider.ServiceInitializer;
 import org.yamcs.jsle.provider.SleService;
 
 public class SimServiceInitializer implements ServiceInitializer {
-  final YConfiguration config;
-  static Logger logger = Logger.getLogger(SimServiceInitializer.class.getName());
+  private YConfiguration config;
+  private Logger logger = Logger.getLogger(SimServiceInitializer.class.getName());
+  private final String RAF = "raf"; // Downlink service ; Request All Frames
+  private final String RCF = "rcf"; // Downlink service ; Request Channel Frames
+  private final String CLTU = "cltu"; // Uplink service ; Forward Communication Link Transmission Unit
 
   public SimServiceInitializer(YConfiguration config) {
     this.config = config;
@@ -54,8 +57,6 @@ public class SimServiceInitializer implements ServiceInitializer {
       String initiatorId, String responderPortId, ApplicationIdentifier appId, String sii) {
     Object[] keys = config.getKeys().toArray();
     String id = "";
-    System.out.println("SII-->" + sii);
-
     for (int i = 0; i < keys.length; i++) {
       if (sii.equals(config.get((String) keys[i]))
           && ((String) keys[i]).startsWith("service.")
@@ -66,21 +67,21 @@ public class SimServiceInitializer implements ServiceInitializer {
 
     String servType = (String) config.get(("service." + id + ".type"));
 
-    if ("raf".equals(servType)) {
+    if (RAF.equals(servType)) {
       if (appId != ApplicationIdentifier.rtnAllFrames) {
         logger.info("Requested application " + appId + " does not match defined service type raf");
         return negativeResponse(6); // inconsistent service type
       }
-      return createRafProvider(id); // will be implemented properly later
+      return createRafProvider(id); 
 
-    } else if ("rcf".equals(servType)) {
+    } else if (RCF.equals(servType)) {
       if (appId != ApplicationIdentifier.rtnChFrames) {
         logger.info("Requested application " + appId + " does not match defined service type rcf");
         return negativeResponse(6); // inconsistent service type
       }
-      return null; // will be implemented properly later
+      return null; 
 
-    } else if ("cltu".equals(servType)) {
+    } else if (CLTU.equals(servType)) {
       if (appId != ApplicationIdentifier.fwdCltu) {
         logger.info("Requested application " + appId + " does not match defined service type cltu");
         return negativeResponse(6); // inconsistent service type
@@ -91,14 +92,19 @@ public class SimServiceInitializer implements ServiceInitializer {
       return negativeResponse(1); // service type not supported
     }
   }
-  /////////////////////// this will be revisited later//////////////
+  
   private ServiceInitResult createRafProvider(String id) {
-    FrameSource f = new rafFrameSource(config);
+    FrameSource f = new RAFFrameSource(config);
     f.startup();
     RafServiceProvider rsp = new RafServiceProvider(f);
     System.out.println(rsp);
     return positiveResponse(id, rsp);
   }
+  private ServiceInitResult createCltuProvider(String id) {
+	    CltuServiceProvider csp = new CltuServiceProvider(new SimFrameSink(1000));
+	    return positiveResponse(id, csp);
+	  }
+/////////////////////// this will be revisited later///////////////////////
   //  private ServiceInitResult createRafProvider(String id) {
   //	         RafServiceProvider rsp = new RafServiceProvider(getFrameSource(id));
   //	         return positiveResponse(id, rsp);
@@ -108,13 +114,6 @@ public class SimServiceInitializer implements ServiceInitializer {
   //          RcfServiceProvider rsp = new RcfServiceProvider(getFrameSource(id));
   //          return positiveResponse(id, rsp); x
   //      }
-  //////////////////////////////////////////////////////////////////////////
-
-  private ServiceInitResult createCltuProvider(String id) {
-    CltuServiceProvider csp = new CltuServiceProvider(new SimFrameSink(1000));
-    return positiveResponse(id, csp);
-  }
-  //////////////////// this will be revisited later///////////////////////////
   //      private FrameSource getFrameSource(String id) {
   //          String sid = SimUtil.getProperty(properties, "service." + id + ".fsource");
   //          FrameSource frameSource = FrameSources.getSource(sid);

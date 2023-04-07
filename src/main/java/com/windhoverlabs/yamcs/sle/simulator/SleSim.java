@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2017 Windhover Labs, L.L.C. All rights reserved.
+ *   Copyright (c) 2023 Windhover Labs, L.L.C. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,35 +49,36 @@ import org.yamcs.YConfiguration;
 import org.yamcs.jsle.AuthLevel;
 import org.yamcs.jsle.Isp1Handler;
 import org.yamcs.jsle.provider.AuthProvider;
-import org.yamcs.jsle.provider.SleAttributes;
 import org.yamcs.jsle.provider.SleProvider;
 import org.yamcs.logging.Log;
 
-public final class SleSim extends AbstractYamcsService implements Runnable {
-  static AuthLevel authLevel = AuthLevel.NONE;
-  static SleAttributes sleAttributes;
-  static Logger logger = Logger.getLogger(SleSim.class.getName());
-  static SimServiceInitializer srvInitializer;
-  static AuthProvider authProvider;
+public class SleSim extends AbstractYamcsService implements Runnable {
+  private AuthLevel authLevel = AuthLevel.NONE;
+  private Logger logger = Logger.getLogger(SleSim.class.getName());
+  private SimServiceInitializer srvInitializer;
+  private AuthProvider authProvider;
   private static String responderId;
   private Thread thread;
-
-  static final int PORT = Integer.parseInt(System.getProperty("port", "8023"));
+  private int port;
+  private int maxFramLength = 300 * 1024;
 
   public void init(String yamcsInstance, String serviceName, YConfiguration config)
       throws InitException {
     this.yamcsInstance = yamcsInstance;
     this.serviceName = serviceName;
     this.config = config;
+    port = this.config.getInt("sle.port");
     log = new Log(getClass(), yamcsInstance);
+    srvInitializer = new SimServiceInitializer(config);
+    authProvider = new SimAuthProvider(config);
+    authLevel = AuthLevel.valueOf((String) config.get("sle.authLevel"));
+    responderId = (String) config.get("sle.responderId");
   }
 
-  private static ChannelHandler getProvider(SocketChannel ch) {
-
-    SleProvider csph = new SleProvider(authProvider, responderId, srvInitializer);
-    //  csph.addMonitor(new MyMonitor(csph));
-    csph.setAuthLevel(authLevel);
-    return csph;
+  private ChannelHandler getProvider(SocketChannel ch) {
+    SleProvider provider = new SleProvider(authProvider, responderId, srvInitializer);
+    provider.setAuthLevel(authLevel);
+    return provider;
   }
 
   @Override
@@ -86,26 +87,15 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
     thread.start();
   }
 
-  // TODO Auto-generated method stub
-
   @Override
   public void run() {
-    int maxFramLength = 300 * 1024;
-
-    srvInitializer = new SimServiceInitializer(config);
-    authProvider = new SimAuthProvider(config);
-
-    authLevel = AuthLevel.valueOf((String) config.get("sle.authLevel"));
-    responderId = (String) config.get("sle.responderId");
-
     // Configure the server.
     EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-
     try {
       ServerBootstrap b = new ServerBootstrap();
       b.group(bossGroup)
           .channel(NioServerSocketChannel.class)
-          .localAddress(new InetSocketAddress(PORT))
+          .localAddress(new InetSocketAddress(port))
           .childHandler(
               new ChannelInitializer<SocketChannel>() {
                 //  Channel gets created
@@ -123,7 +113,6 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
       f.channel().closeFuture().sync();
 
     } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } finally {
       // Shut down all event loops to terminate all threads.
@@ -133,7 +122,5 @@ public final class SleSim extends AbstractYamcsService implements Runnable {
 
   protected void doStop() {
     notifyStopped(); // from YAMCS state
-    // TODO Auto-generated method stub
-
   }
 }
