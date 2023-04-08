@@ -46,10 +46,13 @@ public class SimServiceInitializer implements ServiceInitializer {
   private Logger logger = Logger.getLogger(SimServiceInitializer.class.getName());
   private final String RAF = "raf"; // Downlink service ; Request All Frames
   private final String RCF = "rcf"; // Downlink service ; Request Channel Frames
-  private final String CLTU = "cltu"; // Uplink service ; Forward Communication Link Transmission Unit
+  private final String CLTU =
+      "cltu"; // Uplink service ; Forward Communication Link Transmission Unit
+  private String yamcsInstance;
 
-  public SimServiceInitializer(YConfiguration config) {
+  public SimServiceInitializer(YConfiguration config, String yamcsInstance) {
     this.config = config;
+    this.yamcsInstance = yamcsInstance;
   }
 
   @Override
@@ -72,14 +75,14 @@ public class SimServiceInitializer implements ServiceInitializer {
         logger.info("Requested application " + appId + " does not match defined service type raf");
         return negativeResponse(6); // inconsistent service type
       }
-      return createRafProvider(id); 
+      return createRafProvider(id);
 
     } else if (RCF.equals(servType)) {
       if (appId != ApplicationIdentifier.rtnChFrames) {
         logger.info("Requested application " + appId + " does not match defined service type rcf");
         return negativeResponse(6); // inconsistent service type
       }
-      return null; 
+      return null;
 
     } else if (CLTU.equals(servType)) {
       if (appId != ApplicationIdentifier.fwdCltu) {
@@ -92,19 +95,20 @@ public class SimServiceInitializer implements ServiceInitializer {
       return negativeResponse(1); // service type not supported
     }
   }
-  
+
   private ServiceInitResult createRafProvider(String id) {
-    FrameSource f = new RAFFrameSource(config);
+    FrameSource f = new StreamFrameSource(config, this.yamcsInstance);
     f.startup();
     RafServiceProvider rsp = new RafServiceProvider(f);
     System.out.println(rsp);
     return positiveResponse(id, rsp);
   }
+
   private ServiceInitResult createCltuProvider(String id) {
-	    CltuServiceProvider csp = new CltuServiceProvider(new SimFrameSink(1000));
-	    return positiveResponse(id, csp);
-	  }
-/////////////////////// this will be revisited later///////////////////////
+    CltuServiceProvider csp = new CltuServiceProvider(new SimFrameSink(1000));
+    return positiveResponse(id, csp);
+  }
+  /////////////////////// this will be revisited later///////////////////////
   //  private ServiceInitResult createRafProvider(String id) {
   //	         RafServiceProvider rsp = new RafServiceProvider(getFrameSource(id));
   //	         return positiveResponse(id, rsp);

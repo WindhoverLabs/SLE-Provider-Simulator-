@@ -69,7 +69,7 @@ public class SleSim extends AbstractYamcsService implements Runnable {
     this.config = config;
     port = this.config.getInt("sle.port");
     log = new Log(getClass(), yamcsInstance);
-    srvInitializer = new SimServiceInitializer(config);
+    srvInitializer = new SimServiceInitializer(config, this.yamcsInstance);
     authProvider = new SimAuthProvider(config);
     authLevel = AuthLevel.valueOf((String) config.get("sle.authLevel"));
     responderId = (String) config.get("sle.responderId");

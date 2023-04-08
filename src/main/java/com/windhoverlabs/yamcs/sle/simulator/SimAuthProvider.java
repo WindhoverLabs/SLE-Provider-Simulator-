@@ -36,7 +36,7 @@ import io.netty.buffer.ByteBufUtil;
 import java.util.Arrays;
 import org.yamcs.YConfiguration;
 import org.yamcs.jsle.Isp1Authentication;
-import org.yamcs.jsle.provider.AuthProvider; 
+import org.yamcs.jsle.provider.AuthProvider;
 
 public class SimAuthProvider implements AuthProvider {
   String myUsername;
