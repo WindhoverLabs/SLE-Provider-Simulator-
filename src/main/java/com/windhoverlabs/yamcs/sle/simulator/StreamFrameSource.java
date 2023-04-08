@@ -129,7 +129,7 @@ public class StreamFrameSource implements FrameSource, Runnable {
                   dataLinkContinuity,
                   currentPacket,
                   0,
-                  currentPacket.length));
+                  512)); // using this for testing purposes ; not the best way to do this // currentPacket.length()
     }
   }
 
