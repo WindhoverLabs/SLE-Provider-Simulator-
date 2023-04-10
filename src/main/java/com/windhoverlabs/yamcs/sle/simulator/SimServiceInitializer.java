@@ -60,11 +60,12 @@ public class SimServiceInitializer implements ServiceInitializer {
       String initiatorId, String responderPortId, ApplicationIdentifier appId, String sii) {
     Object[] keys = config.getKeys().toArray();
     String id = "";
-    for (int i = 0; i < keys.length; i++) {
-      if (sii.equals(config.get((String) keys[i]))
-          && ((String) keys[i]).startsWith("service.")
-          && ((String) keys[i]).endsWith(".sii")) {
-        id = ((String) keys[i]).substring(8, ((String) keys[i]).length() - 4);
+
+    for (Object k : keys) {
+      if (sii.equals(config.get((String) k))
+          && ((String) k).startsWith("service.")
+          && ((String) k).endsWith(".sii")) {
+        id = ((String) k).substring(8, ((String) k).length() - 4);
       }
     }
 
@@ -100,7 +101,6 @@ public class SimServiceInitializer implements ServiceInitializer {
     FrameSource f = new StreamFrameSource(config, this.yamcsInstance);
     f.startup();
     RafServiceProvider rsp = new RafServiceProvider(f);
-    System.out.println(rsp);
     return positiveResponse(id, rsp);
   }
 

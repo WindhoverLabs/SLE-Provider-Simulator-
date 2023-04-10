@@ -33,7 +33,6 @@
 package com.windhoverlabs.yamcs.sle.simulator;
 
 import io.netty.buffer.ByteBufUtil;
-import java.util.Arrays;
 import org.yamcs.YConfiguration;
 import org.yamcs.jsle.Isp1Authentication;
 import org.yamcs.jsle.provider.AuthProvider;
@@ -62,7 +61,6 @@ public class SimAuthProvider implements AuthProvider {
     String peerUsername = (String) config.get(("auth." + id + ".peerUsername"));
     String hashAlgorithm = config.getString("auth." + id + ".hashAlgorithm", "SHA-1");
     byte[] peerPass = ByteBufUtil.decodeHexDump(config.getString("auth." + id + ".peerPassword"));
-    System.out.println(Arrays.toString(peerPass));
     return new Isp1Authentication(myUsername, myPass, peerUsername, peerPass, hashAlgorithm);
   }
 }

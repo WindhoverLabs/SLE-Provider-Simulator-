@@ -55,7 +55,6 @@ public class StreamFrameSource implements FrameSource, Runnable {
   static Logger logger = Logger.getLogger(StreamFrameSource.class.getName());
 
   CopyOnWriteArrayList<RacfServiceProvider> rsps = new CopyOnWriteArrayList<RacfServiceProvider>();
-  private int port;
   private int maxFrameLength;
   private Thread runner;
   private volatile boolean stopping = false;
@@ -87,8 +86,7 @@ public class StreamFrameSource implements FrameSource, Runnable {
 
   public StreamFrameSource(YConfiguration config, String yamcsInstance) {
     this.config = config;
-    this.port = config.getInt("fsource.udp.port");
-    this.maxFrameLength = config.getInt("fsource.udp.maxFrameLength");
+    this.maxFrameLength = config.getInt("maxFrameLength");
     this.streamName = config.getString("stream", "tm_realtime");
     YarchDatabaseInstance ydb = YarchDatabase.getInstance(yamcsInstance);
     Stream s = ydb.getStream(streamName);
@@ -113,7 +111,7 @@ public class StreamFrameSource implements FrameSource, Runnable {
 
   @Override
   public void run() {
-    logger.info(": listening for UDP frames at port " + port);
+    //    logger.info(": listening for UDP frames at port " + port);
     while (!stopping) {
       int dataLinkContinuity;
       dataLinkContinuity = 0; // no frame missing
@@ -129,7 +127,8 @@ public class StreamFrameSource implements FrameSource, Runnable {
                   dataLinkContinuity,
                   currentPacket,
                   0,
-                  512)); // using this for testing purposes ; not the best way to do this // currentPacket.length()
+                  512)); // using this for testing purposes ; not the best way to do this //
+      // currentPacket.length()
     }
   }
 
