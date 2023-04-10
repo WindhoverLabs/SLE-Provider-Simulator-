@@ -1,0 +1,239 @@
+#Configuration tested on YAMCS 5.4.0
+services:
+  - class: org.yamcs.archive.XtceTmRecorder
+  - class: org.yamcs.archive.ParameterRecorder
+  - class: org.yamcs.archive.AlarmRecorder
+  - class: org.yamcs.archive.EventRecorder
+  - class: org.yamcs.archive.ReplayServer
+  - class: org.yamcs.parameter.SystemParametersCollector
+    args:
+      provideJvmVariables: true
+      provideFsVariables: true
+  - class: org.yamcs.ProcessorCreatorService
+    args:
+      name: realtime
+      type: realtime
+  - class: org.yamcs.archive.CommandHistoryRecorder
+  - class: org.yamcs.parameterarchive.ParameterArchive
+    args:
+      realtimeFiller:
+        enabled: false
+      backFiller:
+        enabled: true
+        warmupTime: 60
+  - class: org.yamcs.tctm.cfs.CfsEventDecoder
+    args:
+      msgIds: [0x0815, 0x0a15] #Always confirm this ID with CFE_EVS configuration
+      byteOrder: LITTLE_ENDIAN
+      appNameMax: 40
+      eventMsgMax: 122
+
+  - class: org.yamcs.cfdp.CfdpService
+    name: cfdp1
+    args:
+      inStream: cfdp_ch1_in
+      outStream: cfdp_ch1_out
+      localEntities:
+        - name: "0.1"
+          id: 1
+          bucket: cfdpDownCH1
+      remoteEntities:
+        - name: "0.2"
+          id: 2
+          bucket: cfdpUpCH1
+      receiverFaultHandlers:
+        AckLimitReached: suspend
+  - class: org.yamcs.cfdp.CfdpService
+    name: cfdp2
+    args:
+      inStream: cfdp_ch2_in
+      outStream: cfdp_ch2_out
+      localEntities:
+        - name: "0.1"
+          id: 1
+          bucket: cfdpDownCH2
+      remoteEntities:
+        - name: "0.3"
+          id: 3
+          bucket: cfdpUpCH2
+      receiverFaultHandlers:
+        AckLimitReached: suspend
+
+
+  - class: com.windhoverlabs.yamcs.sle.simulator.SleSim
+    args:
+      ################provider configuration file##############################
+      ############### general properties ######################################
+      #general properties used for SLE connection and authentication
+      #they have to be passed to the SLE users to be able to connect and verify the data we send
+      #the password is in hexadecimal
+      #authLevel can be ALL, BIND or NONE
+      maxFrameLength: 1000
+      sle.port: 8023
+      sle.myUsername: mertens
+      sle.myPassword: 000102030405060708090a0b0c0d0e0f
+      sle.authLevel: ALL
+      sle.responderId: jsle-bridge
+
+      ################ authentication information #############################
+      # The initiator-identifier received in the BIND call is matched against the initiatorId
+      # If an entry is found, the corresponding peerUsername/peerPassword are then used to verify the credentials (if the authLevel is ALL or BIND)
+      # If no entry is found the bind is denied even if the authLevel is NONE
+      #
+      auth.1.initiatorId: mertens
+      auth.1.peerUsername: jsle-bridge
+      auth.1.peerPassword: AB0102030405060708090a0b0c0d0e0f
+      auth.1.hashAlgorithm: SHA-1
+
+
+      ################ service definition ############################
+      # The service-instance-identifier in the BIND call is matched against the sii (otherwise the sii is not used)
+      # If an entry is found, the application type is matched against the type
+      # The type has to be either  raf, rcf or cltu 
+      # For raf the udpPort is the local post where we listen for frames
+      # For cltu the udpHost/udpPort is the host and port where we send the received CLTUs
+      # Cltu also supports the bitrate (bits/seconds) used to compute the duration to send one CLTU
+      #
+      service.raf-ontl1.sii: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.raf=onlt1"
+      service.raf-ontl1.type: raf
+      # service.raf-ontl1.fsource: udp1
+
+      # service.rcf-ontl1.sii:sagr: SAGR.spack:SPACK.rsl-fg:RSL-FG.rcf:onlt1
+      # service.rcf-ontl1.type: rcf
+      # service.rcf-ontl1.fsource: udp1
+
+      # service.offl1.sii:sagr: SAGR.spack:SPACK.rsl-fg:RSL-FG.raf:offl1
+      # service.offl1.type: raf
+      # service.offl1.fsource: file1
+
+      service.cltu1.sii: "sagr=SAGR.spack=SPACK.fsl-fg=FSL-FG.cltu=cltu1"
+      service.cltu1.type: cltu
+      # service.cltu1.fsink: udp2
+
+
+dataLinks:
+  - name: ds-logs
+    class: com.windhoverlabs.yamcs.cfs.ds.CfsDsPlugin
+    stream: tm_realtime
+    buckets: ["cfdpDownCH1", "cfdpDownCH2"]
+    DS_FILE_HDR_SUBTYPE: 12346
+    DS_TOTAL_FNAME_BUFSIZE: 64
+    packetPreprocessorClassName: org.yamcs.tctm.cfs.CfsPacketPreprocessor
+    packetPreprocessorArgs:
+      byteOrder: LITTLE_ENDIAN
+      timestampFormat: CFE_SB_TIME_32_16_SUBS
+      timeEncoding:
+        useLocalGenerationTime: false
+        epoch: CUSTOM
+        epochUTC: "1970-01-01T00:00:00Z"
+        timeIncludesLeapSeconds: false
+         
+  - name: tc_cpd
+    class: org.yamcs.tctm.ccsds.UdpTcFrameLink
+    host: 127.0.0.1
+    port: 5110
+    enabledAtStartup: true      
+    spacecraftId: 1
+    maxFrameLength: 1024
+    cltuEncoding: BCH
+    #the following option can be commented out to randomize the CLTUs.
+    #randomizeCltu: false 
+    #the following option can be used to skip randomization for certain virtual channels
+    #skipRandomizationForVcs: [1, 0]    enabledAtStartup: true
+    errorDetection: NONE
+    virtualChannels:
+      - vcId: 0
+        service: "PACKET"
+        commandPostprocessorClassName: org.yamcs.tctm.cfs.CfsCommandPostprocessor
+        commandPostprocessorArgs:
+          swapChecksumFc: true
+        stream: "tc_realtime" #which yamcs stream to get the data from
+        useCop1: true #enable FOP1 (the transmitter part of COP1, see CCSDS 232.1-B-2) for this VC
+        clcwStream: "cpd_clcw" #the name of the stream where the CLCW is received from, mandatory if FOP1 is used
+        initialClcwWait: 3600 #how many seconds to wait at startup for an initial CLCW, before going to state 6(initial). If not configured or negative, start directly in state 6
+                    
+  - name: tm_cpd
+    class: com.windhoverlabs.yamcs.tctm.UdpTmFrameLink
+    stream: tm_realtime
+    port: 5111
+    frameType: TM
+    enabledAtStartup: true
+    clcwStream: cpd_clcw
+    goodFrameStream: good_frames
+    badFrameStream: bad_frames
+    frameHeaderErrorControlPresent: false
+    insertZoneLength: 0
+    spacecraftId: 1
+    errorDetection: NONE
+    frameLength: 1000
+    virtualChannels:
+      - vcId: 0
+        ocfPresent: true
+        service: PACKET
+        maxPacketLength: 32768 #32KB is the default for CCSDS
+        stream: tm_realtime
+        #stripEncapsulationHeader: false
+        #packetPreprocessorClassName: com.windhoverlabs.yamcs.tctm.PacketPreprocessor
+        packetPreprocessorClassName: org.yamcs.tctm.cfs.CfsPacketPreprocessor
+        packetPreprocessorArgs:
+          checkSequence: false
+          byteOrder: LITTLE_ENDIAN
+          #errorDetection:
+          #tcoService:
+          timestampFormat: CFE_SB_TIME_32_16_SUBS
+          timeEncoding:
+            epoch: CUSTOM
+            epochUTC: "1970-01-01T00:00:00Z"
+            timeIncludesLeapSeconds: false
+
+  - name: tc_ppd
+    class: org.yamcs.tctm.UdpTcDataLink
+    stream: tc_realtime
+    host: 127.0.0.1
+    port: 5010
+    enabledAtStartup: false
+    commandPostprocessorClassName: org.yamcs.tctm.cfs.CfsCommandPostprocessor
+    commandPostprocessorArgs:
+      swapChecksumFc: true
+
+  - name: tm_ppd
+    class: org.yamcs.tctm.UdpTmDataLink
+    stream: tm_realtime
+    port: 5011
+    maxLength: 32768 #32KB is the default for CCSDS
+    packetPreprocessorClassName: org.yamcs.tctm.cfs.CfsPacketPreprocessor
+    packetPreprocessorArgs:
+      checkSequence: false
+      byteOrder: LITTLE_ENDIAN
+      useLocalGenerationTime: false
+      #errorDetection:
+      #tcoService:
+      timestampFormat: CFE_SB_TIME_32_16_SUBS
+      checkSequence: false
+      timeEncoding:
+        epoch: CUSTOM
+        epochUTC: "1970-01-01T00:00:00Z"
+        timeIncludesLeapSeconds: false
+
+mdb:
+    # Configuration of the active loaders
+    # Valid loaders are: sheet, xtce or fully qualified name of the class
+    - type: "xtce"
+      spec: "mdb/cfs-ccsds.xml"
+      subLoaders:
+      - type: "xtce"
+        spec: "mdb/ppd.xml"
+      - type: "xtce"
+        spec: "mdb/cpd.xml"
+
+# Configuration for streams created at server startup
+streamConfig:
+  tm:
+    - name: "tm_realtime"
+    - name: "tm_dump"
+  cmdHist: ["cmdhist_realtime", "cmdhist_dump"]
+  event: ["events_realtime", "events_dump"]
+  param: ["pp_realtime", "sys_param", "proc_param"]
+  parameterAlarm: ["alarms_realtime"]
+  tc: ["tc_realtime"]
+  sqlFile: "etc/extra_streams.sql"
