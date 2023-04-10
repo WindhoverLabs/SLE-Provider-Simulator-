@@ -32,7 +32,6 @@
  *****************************************************************************/
 package com.windhoverlabs.yamcs.sle.simulator;
 
-import java.util.Properties;
 import java.util.logging.Logger;
 import org.yamcs.jsle.CcsdsTime;
 import org.yamcs.jsle.Constants.CltuThrowEventDiagnostics;

@@ -32,50 +32,76 @@
  *****************************************************************************/
 package com.windhoverlabs.yamcs.sle.simulator;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
+import org.yamcs.StandardTupleDefinitions;
 import org.yamcs.YConfiguration;
 import org.yamcs.jsle.CcsdsTime;
 import org.yamcs.jsle.Constants.FrameQuality;
 import org.yamcs.jsle.provider.FrameSource;
 import org.yamcs.jsle.provider.RacfServiceProvider;
+import org.yamcs.logging.Log;
+import org.yamcs.yarch.Stream;
+import org.yamcs.yarch.StreamSubscriber;
+import org.yamcs.yarch.Tuple;
+import org.yamcs.yarch.YarchDatabase;
+import org.yamcs.yarch.YarchDatabaseInstance;
 
 /** Receives frames via UDP */
-public class RAFFrameSource implements FrameSource, Runnable {
+public class StreamFrameSource implements FrameSource, Runnable {
   final YConfiguration config;
-  static Logger logger = Logger.getLogger(RAFFrameSource.class.getName());
+  static Logger logger = Logger.getLogger(StreamFrameSource.class.getName());
 
   CopyOnWriteArrayList<RacfServiceProvider> rsps = new CopyOnWriteArrayList<RacfServiceProvider>();
-  int port;
-  int maxFrameLength;
-  private DatagramSocket socket;
-  Thread runner;
+  private int port;
+  private int maxFrameLength;
+  private Thread runner;
   private volatile boolean stopping = false;
+  protected Log log;
+  private String streamName;
+  private byte[] currentPacket = new byte[100];
 
-  public RAFFrameSource(YConfiguration config) {
+  class StreamReader implements StreamSubscriber {
+    Stream stream;
+
+    public StreamReader(Stream stream) {
+      this.stream = stream;
+    }
+
+    @Override
+    public void onTuple(Stream s, Tuple tuple) {
+      long rectime = (Long) tuple.getColumn(StandardTupleDefinitions.TM_RECTIME_COLUMN);
+      long gentime = (Long) tuple.getColumn(StandardTupleDefinitions.GENTIME_COLUMN);
+      int seqCount = (Integer) tuple.getColumn(StandardTupleDefinitions.SEQNUM_COLUMN);
+      //
+      //      currentPacket = (byte[]) tuple.getColumn(StandardTupleDefinitions.TM_PACKET_COLUMN);
+    }
+
+    @Override
+    public void streamClosed(Stream s) {
+      //    	  TODO
+      //          notifyStopped();
+    }
+  }
+
+  public StreamFrameSource(YConfiguration config, String yamcsInstance) {
     this.config = config;
     this.port = config.getInt("fsource.udp.port");
     this.maxFrameLength = config.getInt("fsource.udp.maxFrameLength");
+    this.streamName = config.getString("stream", "tm_realtime");
+    YarchDatabaseInstance ydb = YarchDatabase.getInstance(yamcsInstance);
+    Stream s = ydb.getStream(streamName);
+    StreamReader reader = new StreamReader(s);
+    s.addSubscriber(reader);
   }
 
   @Override
   public void startup() {
     stopping = false;
-    try {
-      socket = new DatagramSocket(port);
-      runner = new Thread(this);
-      runner.start();
-    } catch (SocketException e) {
-      logger.warning(": cannot create datagram socket: " + e);
-      throw new UncheckedIOException(e);
-    }
+    runner = new Thread(this);
+    runner.start();
   }
 
   @Override
@@ -89,31 +115,20 @@ public class RAFFrameSource implements FrameSource, Runnable {
   public void run() {
     logger.info(": listening for UDP frames at port " + port);
     while (!stopping) {
-      DatagramPacket datagram = new DatagramPacket(new byte[maxFrameLength], maxFrameLength);
-      try {
-        socket.receive(datagram);
-      } catch (IOException e) {
-        if (stopping) {
-          return;
-        }
-        logger.warning(": error receiving datagram: " + e);
-        continue;
-      }
       int dataLinkContinuity;
       dataLinkContinuity = 0; // no frame missing
-      logger.fine("received datagram of size " + datagram.getLength());
+      //      logger.fine("received datagram of size " + datagram.getLength());
       Instant t = Instant.now();
       CcsdsTime tc = CcsdsTime.fromUnix(t.getEpochSecond(), t.getNano());
 
+      try {
+        Thread.currentThread().sleep(1000);
+      } catch (InterruptedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
       rsps.forEach(
-          rsp ->
-              rsp.sendFrame(
-                  tc,
-                  FrameQuality.good,
-                  dataLinkContinuity,
-                  datagram.getData(),
-                  datagram.getOffset(),
-                  datagram.getLength()));
+          rsp -> rsp.sendFrame(tc, FrameQuality.good, dataLinkContinuity, currentPacket, 0, 512));
     }
   }
 
@@ -128,9 +143,6 @@ public class RAFFrameSource implements FrameSource, Runnable {
     if (runner != null) {
       runner.interrupt();
       runner = null;
-    }
-    if (socket != null) {
-      socket.close();
     }
   }
 }
