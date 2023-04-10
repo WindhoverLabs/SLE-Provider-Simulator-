@@ -1,0 +1,170 @@
+#Configuration tested on YAMCS 5.4.0
+services:
+  - class: org.yamcs.archive.XtceTmRecorder
+  - class: org.yamcs.archive.ParameterRecorder
+  - class: org.yamcs.archive.AlarmRecorder
+  - class: org.yamcs.archive.EventRecorder
+  - class: org.yamcs.archive.ReplayServer
+  - class: org.yamcs.parameter.SystemParametersCollector
+    args:
+      provideJvmVariables: true
+      provideFsVariables: true
+  - class: org.yamcs.ProcessorCreatorService
+    args:
+      name: realtime
+      type: realtime
+  - class: org.yamcs.archive.CommandHistoryRecorder
+  - class: org.yamcs.parameterarchive.ParameterArchive
+    args:
+      realtimeFiller:
+        enabled: false
+      backFiller:
+        enabled: true
+        warmupTime: 60
+  - class: org.yamcs.tctm.cfs.CfsEventDecoder
+    args:
+      msgIds: [0x0815, 0x0a15] #Always confirm this ID with CFE_EVS configuration
+      byteOrder: LITTLE_ENDIAN
+      appNameMax: 40
+      eventMsgMax: 122
+
+  - class: org.yamcs.cfdp.CfdpService
+    name: cfdp1
+    args:
+      inStream: cfdp_ch1_in
+      outStream: cfdp_ch1_out
+      localEntities:
+        - name: "0.1"
+          id: 1
+          bucket: cfdpDownCH1
+      remoteEntities:
+        - name: "0.2"
+          id: 2
+          bucket: cfdpUpCH1
+      receiverFaultHandlers:
+        AckLimitReached: suspend
+  - class: org.yamcs.cfdp.CfdpService
+    name: cfdp2
+    args:
+      inStream: cfdp_ch2_in
+      outStream: cfdp_ch2_out
+      localEntities:
+        - name: "0.1"
+          id: 1
+          bucket: cfdpDownCH2
+      remoteEntities:
+        - name: "0.3"
+          id: 3
+          bucket: cfdpUpCH2
+      receiverFaultHandlers:
+        AckLimitReached: suspend
+
+dataLinks:
+  - name: ds-logs
+    class: com.windhoverlabs.yamcs.cfs.ds.CfsDsPlugin
+    stream: tm_realtime
+    buckets: ["cfdpDownCH1", "cfdpDownCH2"]
+    DS_FILE_HDR_SUBTYPE: 12346
+    DS_TOTAL_FNAME_BUFSIZE: 64
+    packetPreprocessorClassName: org.yamcs.tctm.cfs.CfsPacketPreprocessor
+    packetPreprocessorArgs:
+      byteOrder: LITTLE_ENDIAN
+      timestampFormat: CFE_SB_TIME_32_16_SUBS
+      timeEncoding:
+        useLocalGenerationTime: false
+        epoch: CUSTOM
+        epochUTC: "1970-01-01T00:00:00Z"
+        timeIncludesLeapSeconds: false
+  - name: sle-client
+    sleProvider: GS1
+    class: org.yamcs.sle.TcSleLink
+    enabledAtStartup: true
+    startSleOnEnable: false
+    spacecraftId: 0x339
+    maxFrameLength: 1115
+    errorDetection: NONE
+    # Pad CLTUs to 128 bytes. (Eventually this CLTU generator will also
+    # insert the security header and trailer and optionally encrypt the
+    # uplink frame.)
+    cltuEncoding: BCH
+    #cltuGeneratorClassName: gov.nasa.viper.yamcs.ViperCltuGenerator
+    #cltuGeneratorArgs:
+    # paddedCltuLength: 128
+    # addSecurityHeaderTrailer: true
+    virtualChannels:
+      # The main use of VCID 1 for uplink. This listens to commands on the
+      # tc_realtime stream and uses COP-1.
+      - vcId: 1
+        service: "PACKET"
+        stream: "tc_realtime" # Which yamcs stream to get the data from
+        multiplePacketsPerFrame: false
+        useCop1: true # Enable FOP1 (the transmitter part of COP1, see CCSDS 232.1-B-2) for this VC
+        clcwStream: "clcw" # The name of the stream where the CLCW is received from, mandatory if FOP1 is used
+        # How many seconds to wait at startup for an initial CLCW, before going to state 6(initial). If not
+        # configured or negative, start directly in state 6
+        initialClcwWait: 3600
+        # Retransmission delay, in seconds.
+        cop1T1: 15
+        # Max. number of command retransmissions.
+        cop1TxLimit: 3
+      # A second way to use VCID 1 for uplink, from the tc_bypass stream
+      # instead of tc_realtime. This is used for commands and services
+      # that should always use BC frames, such as CFDP.
+      - vcId: 1
+        linkName: vc1_bypass
+        service: "PACKET"
+        stream: "tc_realtime" # Get only commands that should use BD service
+        multiplePacketsPerFrame: false
+        useCop1: false  
+    enabledAtStartup: true  
+  - name: SLE_IN
+    class: org.yamcs.sle.TmSleLink
+    sleProvider: GS1
+    deliveryMode: timely
+    startSleOnEnable: false
+    frameType: TM
+    spacecraftId: 1
+    errorDetection: NONE
+    frameLength: 512
+    virtualChannels:
+      - vcId: 0
+        ocfPresent: true
+        service: PACKET
+        maxPacketLength: 32768 #32KB is the default for CCSDS
+        stream: tm_realtime
+        #stripEncapsulationHeader: false
+        #packetPreprocessorClassName: com.windhoverlabs.yamcs.tctm.PacketPreprocessor
+        packetPreprocessorClassName: org.yamcs.tctm.cfs.CfsPacketPreprocessor
+        packetPreprocessorArgs:
+          checkSequence: false
+          byteOrder: LITTLE_ENDIAN
+          #errorDetection:
+          #tcoService:
+          timestampFormat: CFE_SB_TIME_32_16_SUBS
+          timeEncoding:
+            epoch: CUSTOM
+            epochUTC: "1970-01-01T00:00:00Z"
+            timeIncludesLeapSeconds: false  
+      # other options 
+mdb:
+    # Configuration of the active loaders
+    # Valid loaders are: sheet, xtce or fully qualified name of the class
+    - type: "xtce"
+      spec: "mdb/cfs-ccsds.xml"
+      subLoaders:
+      - type: "xtce"
+        spec: "mdb/ppd.xml"
+      - type: "xtce"
+        spec: "mdb/cpd.xml"
+
+# Configuration for streams created at server startup
+streamConfig:
+  tm:
+    - name: "tm_realtime"
+    - name: "tm_dump"
+  cmdHist: ["cmdhist_realtime", "cmdhist_dump"]
+  event: ["events_realtime", "events_dump"]
+  param: ["pp_realtime", "sys_param", "proc_param"]
+  parameterAlarm: ["alarms_realtime"]
+  tc: ["tc_realtime"]
+  sqlFile: "etc/extra_streams.sql"
