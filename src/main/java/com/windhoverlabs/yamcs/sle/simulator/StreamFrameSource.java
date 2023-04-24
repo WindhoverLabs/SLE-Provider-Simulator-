@@ -74,10 +74,10 @@ public class StreamFrameSource implements FrameSource, Runnable {
       currentPacket = (byte[]) tuple.getColumn(StandardTupleDefinitions.TM_PACKET_COLUMN);
     }
 
-    @Override
-    public void streamClosed(Stream s) {
-      // notifyStopped();
-    }
+    //    @Override
+    //    public void streamClosed(Stream s) {
+    //      // notifyStopped();
+    //    }
   }
 
   public StreamFrameSource(YConfiguration config, String yamcsInstance) {
