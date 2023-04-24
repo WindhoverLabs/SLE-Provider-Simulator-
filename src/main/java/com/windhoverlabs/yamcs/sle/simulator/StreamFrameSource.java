@@ -49,7 +49,7 @@ import org.yamcs.yarch.Tuple;
 import org.yamcs.yarch.YarchDatabase;
 import org.yamcs.yarch.YarchDatabaseInstance;
 
-/** Receives frames via UDP */
+/** Receives frames through a stream */
 public class StreamFrameSource implements FrameSource, Runnable {
   final YConfiguration config;
   static Logger logger = Logger.getLogger(StreamFrameSource.class.getName());
@@ -71,22 +71,18 @@ public class StreamFrameSource implements FrameSource, Runnable {
 
     @Override
     public void onTuple(Stream s, Tuple tuple) {
-      long rectime = (Long) tuple.getColumn(StandardTupleDefinitions.TM_RECTIME_COLUMN);
-      long gentime = (Long) tuple.getColumn(StandardTupleDefinitions.GENTIME_COLUMN);
-      int seqCount = (Integer) tuple.getColumn(StandardTupleDefinitions.SEQNUM_COLUMN);
       currentPacket = (byte[]) tuple.getColumn(StandardTupleDefinitions.TM_PACKET_COLUMN);
     }
 
     @Override
     public void streamClosed(Stream s) {
-      // TODO
-      //   notifyStopped();
+      // notifyStopped();
     }
   }
 
   public StreamFrameSource(YConfiguration config, String yamcsInstance) {
     this.config = config;
-    this.maxFrameLength = config.getInt("maxFrameLength");
+    this.maxFrameLength = config.getInt("fsource.udp.maxFrameLength");
     this.streamName = config.getString("stream", "tm_realtime");
     YarchDatabaseInstance ydb = YarchDatabase.getInstance(yamcsInstance);
     Stream s = ydb.getStream(streamName);
@@ -111,11 +107,10 @@ public class StreamFrameSource implements FrameSource, Runnable {
 
   @Override
   public void run() {
-    //    logger.info(": listening for UDP frames at port " + port);
     while (!stopping) {
       int dataLinkContinuity;
       dataLinkContinuity = 0; // no frame missing
-      //   logger.fine("received datagram of size " + datagram.getLength());
+      logger.fine("reveived stream");
       Instant t = Instant.now();
       CcsdsTime tc = CcsdsTime.fromUnix(t.getEpochSecond(), t.getNano());
 
@@ -145,4 +140,14 @@ public class StreamFrameSource implements FrameSource, Runnable {
       runner = null;
     }
   }
+
+  //  @Override
+  //  protected void doStart() {
+  //    startup();
+  //  }
+
+  //  @Override
+  ////  protected void doStop() {
+  ////    notifyStopped();
+  ////  }
 }

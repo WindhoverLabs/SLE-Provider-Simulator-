@@ -60,13 +60,18 @@ public class SleSim extends AbstractYamcsService implements Runnable {
   private static String responderId;
   private Thread thread;
   private int port;
-  private int maxFramLength = 300 * 1024;
+  private int maxFrameLength; // 300 * 1024 = 307200
+  private int lengthFieldOffset; // 4
+  private int lengthFieldLength; // 4
 
   public void init(String yamcsInstance, String serviceName, YConfiguration config)
       throws InitException {
     this.yamcsInstance = yamcsInstance;
     this.serviceName = serviceName;
     this.config = config;
+    this.maxFrameLength = config.getInt("maxFrameLength");
+    this.lengthFieldOffset = config.getInt("lengthFieldOffset");
+    this.lengthFieldLength = config.getInt("lengthFieldLength");
     port = this.config.getInt("sle.port");
     log = new Log(getClass(), yamcsInstance);
     srvInitializer = new SimServiceInitializer(config, this.yamcsInstance);
@@ -101,7 +106,10 @@ public class SleSim extends AbstractYamcsService implements Runnable {
                 //  Channel gets created
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
-                  ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(maxFramLength, 4, 4));
+                  ch.pipeline()
+                      .addLast(
+                          new LengthFieldBasedFrameDecoder(
+                              maxFrameLength, lengthFieldOffset, lengthFieldLength));
                   ch.pipeline().addLast(new Isp1Handler(false));
                   ch.pipeline().addLast(getProvider(ch));
                 }

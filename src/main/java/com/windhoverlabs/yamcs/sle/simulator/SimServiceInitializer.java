@@ -108,7 +108,8 @@ public class SimServiceInitializer implements ServiceInitializer {
     CltuServiceProvider csp = new CltuServiceProvider(new SimFrameSink(1000));
     return positiveResponse(id, csp);
   }
-  /////////////////////// this will be revisited later///////////////////////
+  /////////////////////// this will be revisited
+  // later//////////////////////////////////////////////////////
   //  private ServiceInitResult createRafProvider(String id) {
   //	         RafServiceProvider rsp = new RafServiceProvider(getFrameSource(id));
   //	         return positiveResponse(id, rsp);
@@ -126,7 +127,7 @@ public class SimServiceInitializer implements ServiceInitializer {
   //          }
   //          return frameSource;
   //      }
-  ////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   private ServiceInitResult positiveResponse(String id, SleService service) {
     ServiceInitResult r = new ServiceInitResult();

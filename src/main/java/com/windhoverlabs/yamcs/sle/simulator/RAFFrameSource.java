@@ -40,14 +40,16 @@ import java.net.SocketException;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 import org.yamcs.YConfiguration;
 import org.yamcs.jsle.CcsdsTime;
 import org.yamcs.jsle.Constants.FrameQuality;
 import org.yamcs.jsle.provider.FrameSource;
 import org.yamcs.jsle.provider.RacfServiceProvider;
+import org.yamcs.utils.DataRateMeter;
 
-/** Receives frames via UDP */
+/** Receives frames via a stream. Implements the RAF service. */
 public class RAFFrameSource implements FrameSource, Runnable {
   final YConfiguration config;
   static Logger logger = Logger.getLogger(RAFFrameSource.class.getName());
@@ -58,6 +60,9 @@ public class RAFFrameSource implements FrameSource, Runnable {
   private DatagramSocket socket;
   Thread runner;
   private volatile boolean stopping = false;
+  protected AtomicLong packetCount = new AtomicLong(0);
+  DataRateMeter packetRateMeter = new DataRateMeter();
+  DataRateMeter dataRateMeter = new DataRateMeter();
 
   public RAFFrameSource(YConfiguration config) {
     this.config = config;
