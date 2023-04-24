@@ -1,0 +1,33 @@
+CommonSettings: &CommonSettings
+    hashAlgorithm: SHA-1
+    authLevel: ALL
+    versionNumber: 3
+    myUsername: jsle-bridge # do not change, not parallel to the provider's config
+    myPassword: AB0102030405060708090a0b0c0d0e0f  
+    initiatorId: mertens
+    responderPortId: jsle-bridge
+    heartbeatInterval: 400
+    heartbeatDeadFactor: 2
+    reconnectionIntervalc: 3
+
+Providers:
+    GS1:
+        <<: *CommonSettings
+        peerUsername: mertens
+        peerPassword: 000102030405060708090a0b0c0d0e0f
+
+        cltu:
+            host: localhost
+            port: 8023
+            serviceInstance: "sagr=SAGR.spack=SPACK.fsl-fg=FSL-FG.cltu=cltu1"
+            
+        raf-onlt:
+            host: localhost
+            port: 8023
+            serviceInstance: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.raf=onlt1"
+            
+        rcf-onlt:
+            host: localhost
+            port: 8023
+            serviceInstance: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.rcf=onlt1"
+

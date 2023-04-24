@@ -16,3 +16,4 @@ This should launch YAMCS from the sitl_commander_workspace directory.
 
 When YAMCS is lauched, sle-client will be in READY state. To go to ACTIVE state navigate to "more actions" and select "Start SLE". 
 
+This project has Spotbug maven plugin to be used as a source analysis tool. To launch Spotbug, type this command: mvn spotbugs:gui

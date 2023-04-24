@@ -1,0 +1,72 @@
+#Configuration tested on YAMCS 5.4.0
+services:
+  - class: org.yamcs.archive.XtceTmRecorder
+  - class: org.yamcs.archive.ParameterRecorder
+  - class: org.yamcs.archive.AlarmRecorder
+  - class: org.yamcs.archive.EventRecorder
+  - class: org.yamcs.archive.ReplayServer
+  - class: com.windhoverlabs.yamcs.sle.simulator.SleSim
+    args:
+      sle.port: 8023
+      sle.myUsername: mertens
+      sle.myPassword: 000102030405060708090a0b0c0d0e0f
+      sle.authLevel: ALL
+      sle.responderId: jsle-bridge
+      auth.1.initiatorId: mertens
+      auth.1.peerUsername: jsle-bridge
+      auth.1.peerPassword: AB0102030405060708090a0b0c0d0e0f
+      auth.1.hashAlgorithm: SHA-1
+      service.raf-ontl1.sii: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.raf=onlt1"
+      service.raf-ontl1.type: raf
+      service.rcf-ontl1.sii: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.rcf=onlt1"
+      service.rcf-ontl1.type: rcf
+      service.offl1.sii: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.raf=offl1"
+      service.offl1.type: raf
+      service.cltu1.sii: "sagr=SAGR.spack=SPACK.fsl-fg=FSL-FG.cltu=cltu1"
+      service.cltu1.type: cltu
+      fsource.udp.port: 1235
+      fsource.udp.maxFrameLength: 1115
+      fsource.udp.record: /storage/data1
+  - class: org.yamcs.parameter.SystemParametersCollector
+    args:
+      provideJvmVariables: true
+      provideFsVariables: true
+  - class: org.yamcs.ProcessorCreatorService
+    args:
+      name: realtime
+      type: realtime
+  - class: org.yamcs.archive.CommandHistoryRecorder
+  - class: org.yamcs.parameterarchive.ParameterArchive
+    args:
+      realtimeFiller:
+        enabled: false
+      backFiller:
+        enabled: true
+        warmupTime: 60
+  - class: org.yamcs.tctm.cfs.CfsEventDecoder
+    args:
+      msgIds: [0x0815, 0x0a15] #Always confirm this ID with CFE_EVS configuration
+      byteOrder: LITTLE_ENDIAN
+      appNameMax: 40
+      eventMsgMax: 122
+mdb:
+    # Configuration of the active loaders
+    # Valid loaders are: sheet, xtce or fully qualified name of the class
+    - type: "xtce"
+      spec: "mdb/cfs-ccsds.xml"
+      subLoaders:
+      - type: "xtce"
+        spec: "mdb/ppd.xml"
+      - type: "xtce"
+        spec: "mdb/cpd.xml"
+
+# Configuration for streams created at server startup
+streamConfig:
+  tm:
+    - name: "tm_realtime"
+    - name: "tm_dump"
+  cmdHist: ["cmdhist_realtime", "cmdhist_dump"]
+  event: ["events_realtime", "events_dump"]
+  param: ["pp_realtime", "sys_param", "proc_param"]
+  parameterAlarm: ["alarms_realtime"]
+  tc: ["tc_realtime"]

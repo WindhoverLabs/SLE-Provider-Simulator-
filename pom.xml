@@ -1,0 +1,103 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.windhoverlabs</groupId>
+  <artifactId>yamcs-sle-simulator</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  	<properties>
+		<yamcsVersion>5.7.0</yamcsVersion>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+	<dependencies>
+	<dependency>
+      <groupId>org.yamcs</groupId>
+      <artifactId>yamcs-core</artifactId>
+      <version>${yamcsVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+<!--	<dependency>
+		<groupId>org.yamcs</groupId>
+		<artifactId>yamcs-sle</artifactId>
+		<version>1.5.0</version>
+	</dependency>-->
+	<dependency>
+	<groupId>io.netty</groupId>
+    <artifactId>netty-all</artifactId>
+    <version>4.0.0.CR3</version>
+    </dependency>
+    <dependency>
+	<groupId>javassist</groupId>
+    <artifactId>javassist</artifactId>
+    <version>3.12.1.GA</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.yamcs</groupId>
+    	<artifactId>jsle</artifactId>
+    	<version>1.0.0</version>
+    </dependency>
+	</dependencies>
+    <build>
+    <plugins>
+		<plugin>
+  <groupId>com.github.spotbugs</groupId>
+  <artifactId>spotbugs-maven-plugin</artifactId>
+  <version>4.7.2.1</version>
+  <dependencies>
+    <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs</artifactId>
+      <version>4.7.3</version>
+    </dependency>
+  </dependencies>
+</plugin>
+   <plugin>
+  <groupId>org.yamcs</groupId>
+  <artifactId>yamcs-maven-plugin</artifactId>
+ <!-- <version>...</version> -->
+  <executions>
+    <execution>
+      <goals>
+        <goal>detect</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+<plugin> 
+    <artifactId>maven-dependency-plugin</artifactId> 
+    <executions> 
+      <execution> 
+        <phase>install</phase> 
+          <goals> 
+            <goal>copy-dependencies</goal> 
+          </goals> 
+        </execution> 
+      </executions> 
+    </plugin> 
+    <plugin>
+				<groupId>com.coveo</groupId>
+				<artifactId>fmt-maven-plugin</artifactId>
+				<version>2.13</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<style>google</style>
+				</configuration>
+			</plugin>
+    <plugin>
+		<groupId>org.codehaus.mojo</groupId>
+		<artifactId>exec-maven-plugin</artifactId>
+		<version>1.6.0</version>
+		<configuration>
+			<mainClass>com.windhoverlabs.yamcs.sle.simulator.SleSim</mainClass>
+		</configuration>
+</plugin>
+
+</plugins>
+</build>
+</project>
